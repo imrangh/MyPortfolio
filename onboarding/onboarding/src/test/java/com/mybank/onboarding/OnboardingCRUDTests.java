@@ -88,13 +88,13 @@ public class OnboardingCRUDTests {
 
         DocumentContext documentContext = JsonPath.parse(response.getBody());
         int onboardingStaffCount = documentContext.read("$.length()");
-        assertThat(onboardingStaffCount).isEqualTo(3);
+        assertThat(onboardingStaffCount).isEqualTo(4);
 
         JSONArray ids = documentContext.read("$..id");
-        assertThat(ids).containsExactlyInAnyOrder(99, 100, 101);
+        assertThat(ids).containsExactlyInAnyOrder(99, 100, 101, 102);
 
         JSONArray names = documentContext.read("$..name");
-        assertThat(names).containsExactlyInAnyOrder("John Doe", "Isshaaq Ismail", "Ayesha Jayah");
+        assertThat(names).containsExactlyInAnyOrder("Imran Ismail", "Isshaaq Ismail", "Ayesha Jayah",  "Kumar De Silva");
     }
 
     @Test
@@ -122,6 +122,7 @@ public class OnboardingCRUDTests {
     }
 
     @Test
+    @DirtiesContext
     void shouldUpdateAnExistingOnboardingStaff(){
         OnboardingStaff onboardingStaffUpdate = new OnboardingStaff(null, "John Doe", "admin");
 
@@ -158,5 +159,43 @@ public class OnboardingCRUDTests {
                 .exchange("/newstaff/9999", HttpMethod.PUT, request, Void.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DirtiesContext
+    void shouldDeleteAnExistingOnboardingStaff() {
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .exchange("/newstaff/99", HttpMethod.DELETE, null, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .getForEntity("/newstaff/99", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotDeleteAOnboardingStaffThatDoesNotExist(){
+        ResponseEntity<Void> deleteResponse = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .exchange("/newstaff/9999", HttpMethod.DELETE, null, Void.class);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void shouldNotAllowDeletionOfOnboardingStaffTheyDoNotOwn() {
+        ResponseEntity<Void> deleteResponse = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .exchange("/newstaff/102", HttpMethod.DELETE, null, Void.class);
+
+        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("kumar", "xyz789")
+                .getForEntity("/newstaff/102", String.class);
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 }

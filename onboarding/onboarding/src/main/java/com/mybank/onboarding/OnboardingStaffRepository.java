@@ -5,4 +5,5 @@ public interface OnboardingStaffRepository extends CrudRepository<OnboardingStaf
     OnboardingStaff findByIdAndOwner(Long id, String owner);
 
 
+    boolean existsByIdAndOwner(Long id, String name);
 }

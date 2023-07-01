@@ -65,4 +65,17 @@ public class OnboardingStaffController {
 
     }
 
+    @DeleteMapping("/{id}")
+    private ResponseEntity<Void> deleteOnboardingStaff(@PathVariable Long id, Principal principal){
+
+        if(onboardingStaffRepository.existsByIdAndOwner(id, principal.getName())) {
+            onboardingStaffRepository.deleteById(id);
+            return  ResponseEntity.noContent().build();
+
+        }
+
+        return ResponseEntity.notFound().build();
+
+    }
+
 }
