@@ -147,4 +147,16 @@ public class OnboardingCRUDTests {
         assertThat(id).isEqualTo(99);
         assertThat(name).isEqualTo("John Doe");
     }
+
+    @Test
+    void shouldNotUpdateAOnboardingStaffThatDoesNotExist(){
+        OnboardingStaff unknownStaff = new OnboardingStaff(null, "Unknown Staff", null);
+
+        HttpEntity<OnboardingStaff> request = new HttpEntity<>(unknownStaff);
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .exchange("/newstaff/9999", HttpMethod.PUT, request, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }

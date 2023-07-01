@@ -18,13 +18,17 @@ public class OnboardingStaffController {
         this.onboardingStaffRepository = onboardingStaffRepository;
     }
 
+    private OnboardingStaff findOnboardingStaff(Long staffId, Principal principal){
+        return onboardingStaffRepository.findByIdAndOwner(staffId, principal.getName());
+    }
+
     @GetMapping("/{staffId}")
-    public ResponseEntity<OnboardingStaff> findById(@PathVariable Long staffId){
+    public ResponseEntity<OnboardingStaff> findById(@PathVariable Long staffId, Principal principal){
 
-        Optional<OnboardingStaff> onboardingStaffOptional = onboardingStaffRepository.findById(staffId);
-        if(onboardingStaffOptional.isPresent()){
+        OnboardingStaff onboardingStaff = findOnboardingStaff(staffId, principal);
+        if(onboardingStaff != null){
 
-            return ResponseEntity.ok(onboardingStaffOptional.get());
+            return ResponseEntity.ok(onboardingStaff);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -48,12 +52,17 @@ public class OnboardingStaffController {
 
     @PutMapping("/{staffId}")
     private ResponseEntity<Void> putOnboardingStaff(@PathVariable Long staffId, @RequestBody OnboardingStaff onboardingStaffUpdate, Principal principal){
-        OnboardingStaff onboardingStaff = onboardingStaffRepository.findByIdAndOwner(staffId, principal.getName());
+        OnboardingStaff onboardingStaff = findOnboardingStaff(staffId, principal);
 
-        OnboardingStaff updatedOnboardingStaff = new OnboardingStaff(onboardingStaff.id(), onboardingStaffUpdate.name(), principal.getName());
+        if(onboardingStaff !=null){
+            OnboardingStaff updatedOnboardingStaff = new OnboardingStaff(onboardingStaff.id(), onboardingStaffUpdate.name(), principal.getName());
 
-        onboardingStaffRepository.save(updatedOnboardingStaff);
-        return ResponseEntity.noContent().build();
+            onboardingStaffRepository.save(updatedOnboardingStaff);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
+
     }
 
 }
