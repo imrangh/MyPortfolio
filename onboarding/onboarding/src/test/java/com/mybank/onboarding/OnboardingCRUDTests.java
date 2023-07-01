@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
@@ -92,7 +94,7 @@ public class OnboardingCRUDTests {
         assertThat(ids).containsExactlyInAnyOrder(99, 100, 101);
 
         JSONArray names = documentContext.read("$..name");
-        assertThat(names).containsExactlyInAnyOrder("Imran Ismail", "Isshaaq Ismail", "Ayesha Jayah");
+        assertThat(names).containsExactlyInAnyOrder("John Doe", "Isshaaq Ismail", "Ayesha Jayah");
     }
 
     @Test
@@ -117,5 +119,32 @@ public class OnboardingCRUDTests {
                 .getForEntity("/newstaff/99", String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void shouldUpdateAnExistingOnboardingStaff(){
+        OnboardingStaff onboardingStaffUpdate = new OnboardingStaff(null, "John Doe", "admin");
+
+        HttpEntity<OnboardingStaff> request = new HttpEntity<>(onboardingStaffUpdate);
+
+        ResponseEntity<Void> response = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .exchange("/newstaff/99", HttpMethod.PUT, request, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        ResponseEntity<String> getResponse = restTemplate
+                .withBasicAuth("admin", "admin123")
+                .getForEntity("/newstaff/99", String.class);
+
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DocumentContext documentContext = JsonPath.parse(getResponse.getBody());
+
+        Number id = documentContext.read("$.id");
+        String name = documentContext.read("$.name");
+
+        assertThat(id).isEqualTo(99);
+        assertThat(name).isEqualTo("John Doe");
     }
 }
